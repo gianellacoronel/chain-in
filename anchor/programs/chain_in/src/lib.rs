@@ -15,6 +15,10 @@ declare_id!("Eai82xNfih16jrTcQktnKaAYWG9hkvUuQ6uRGPtDsWwM");
 pub mod chain_in {
     use super::*;
 
+    pub fn initialize_profile(ctx: Context<InitializeProfile>) -> Result<()> {
+        crate::instructions::initialize::handle_initialize_profile(ctx)
+    }
+
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         crate::instructions::initialize::handle_initialize(ctx)
     }
