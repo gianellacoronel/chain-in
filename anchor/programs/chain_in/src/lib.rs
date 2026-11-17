@@ -50,4 +50,8 @@ pub mod chain_in {
     pub fn archive_habit(ctx: Context<ArchiveHabit>) -> Result<()> {
         crate::instructions::archive_habit::handle_archive_habit(ctx)
     }
+
+    pub fn close_habit(ctx: Context<CloseHabit>) -> Result<()> {
+        crate::instructions::close_habit::handle_close_habit(ctx)
+    }
 }

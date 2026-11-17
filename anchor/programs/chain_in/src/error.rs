@@ -24,4 +24,6 @@ pub enum ErrorCode {
     HabitNotResumable,
     #[msg("Only active or paused habits can be archived")]
     HabitNotArchivable,
+    #[msg("Only archived habits can be closed")]
+    HabitNotClosable,
 }
