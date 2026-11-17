@@ -19,11 +19,11 @@ pub mod chain_in {
         crate::instructions::initialize::handle_initialize_profile(ctx)
     }
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        crate::instructions::initialize::handle_initialize(ctx)
-    }
-
-    pub fn increment(ctx: Context<Increment>) -> Result<()> {
-        crate::instructions::increment::handle_increment(ctx)
+    pub fn create_habit(
+        ctx: Context<CreateHabit>,
+        name: String,
+        description: String,
+    ) -> Result<()> {
+        crate::instructions::create_habit::handle_create_habit(ctx, name, description)
     }
 }

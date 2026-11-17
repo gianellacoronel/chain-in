@@ -1,13 +1,10 @@
 use anchor_lang::prelude::*;
 
 #[constant]
-pub const COUNTER_SEED: &[u8] = b"counter";
-
-#[constant]
 pub const PROFILE_SEED: &[u8] = b"profile";
 
 #[constant]
-pub const HELLO_WORLD_LAMPORTS: u64 = 1;
+pub const HABIT_SEED: &[u8] = b"habit";
 
-#[constant]
-pub const MAX_COUNT: u64 = 10;
+pub const MAX_HABIT_NAME_LEN: usize = 40;
+pub const MAX_HABIT_DESCRIPTION_LEN: usize = 160;
