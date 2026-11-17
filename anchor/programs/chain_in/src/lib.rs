@@ -34,4 +34,8 @@ pub mod chain_in {
     ) -> Result<()> {
         crate::instructions::update_habit::handle_update_habit(ctx, name, description)
     }
+
+    pub fn check_in(ctx: Context<CheckIn>, day: i64) -> Result<()> {
+        crate::instructions::check_in::handle_check_in(ctx, day)
+    }
 }

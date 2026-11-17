@@ -32,3 +32,15 @@ pub struct Habit {
     pub last_check_in_day: Option<i64>,
     pub created_at: i64,
 }
+
+#[account]
+#[derive(InitSpace)]
+pub struct DailyCheckIn {
+    pub owner: Pubkey,
+    pub habit: Pubkey,
+    pub habit_id: u64,
+    #[max_len(MAX_HABIT_NAME_LEN)]
+    pub habit_name_snapshot: String,
+    pub day: i64,
+    pub checked_at: i64,
+}
