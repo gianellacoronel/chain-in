@@ -26,4 +26,12 @@ pub mod chain_in {
     ) -> Result<()> {
         crate::instructions::create_habit::handle_create_habit(ctx, name, description)
     }
+
+    pub fn update_habit(
+        ctx: Context<UpdateHabit>,
+        name: String,
+        description: String,
+    ) -> Result<()> {
+        crate::instructions::update_habit::handle_update_habit(ctx, name, description)
+    }
 }

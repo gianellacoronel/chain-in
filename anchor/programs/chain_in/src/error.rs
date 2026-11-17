@@ -4,6 +4,8 @@ use anchor_lang::prelude::*;
 pub enum ErrorCode {
     #[msg("Signer is not the profile authority")]
     UnauthorizedProfile,
+    #[msg("Signer is not the habit owner")]
+    UnauthorizedHabit,
     #[msg("Habit name exceeds the maximum byte length")]
     HabitNameTooLong,
     #[msg("Habit description exceeds the maximum byte length")]
