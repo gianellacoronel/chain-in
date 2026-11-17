@@ -46,4 +46,8 @@ pub mod chain_in {
     pub fn resume_habit(ctx: Context<ResumeHabit>) -> Result<()> {
         crate::instructions::resume_habit::handle_resume_habit(ctx)
     }
+
+    pub fn archive_habit(ctx: Context<ArchiveHabit>) -> Result<()> {
+        crate::instructions::archive_habit::handle_archive_habit(ctx)
+    }
 }

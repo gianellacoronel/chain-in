@@ -22,4 +22,6 @@ pub enum ErrorCode {
     HabitNotPauseable,
     #[msg("Only paused habits can be resumed")]
     HabitNotResumable,
+    #[msg("Only active or paused habits can be archived")]
+    HabitNotArchivable,
 }
