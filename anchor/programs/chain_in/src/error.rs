@@ -18,4 +18,8 @@ pub enum ErrorCode {
     InvalidCheckInDay,
     #[msg("Streak counter overflow")]
     StreakOverflow,
+    #[msg("Only active habits can be paused")]
+    HabitNotPauseable,
+    #[msg("Only paused habits can be resumed")]
+    HabitNotResumable,
 }

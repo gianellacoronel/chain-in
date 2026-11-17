@@ -38,4 +38,12 @@ pub mod chain_in {
     pub fn check_in(ctx: Context<CheckIn>, day: i64) -> Result<()> {
         crate::instructions::check_in::handle_check_in(ctx, day)
     }
+
+    pub fn pause_habit(ctx: Context<PauseHabit>) -> Result<()> {
+        crate::instructions::pause_habit::handle_pause_habit(ctx)
+    }
+
+    pub fn resume_habit(ctx: Context<ResumeHabit>) -> Result<()> {
+        crate::instructions::resume_habit::handle_resume_habit(ctx)
+    }
 }
