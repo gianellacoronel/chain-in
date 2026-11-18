@@ -6,7 +6,7 @@
 #![allow(dead_code)]
 
 use anchor_lang::{AccountDeserialize, Space};
-use chain_in::{HABIT_SEED, PROFILE_SEED, Habit, Profile};
+use chain_in::{CHECKIN_SEED, DailyCheckIn, HABIT_SEED, PROFILE_SEED, Habit, Profile};
 use litesvm::LiteSVM;
 use sha2::{Digest, Sha256};
 use solana_address::{Address, address};
@@ -25,6 +25,8 @@ pub const ERR_UNAUTHORIZED_PROFILE: u32 = 6000;
 pub const ERR_UNAUTHORIZED_HABIT: u32 = 6001;
 pub const ERR_HABIT_NAME_TOO_LONG: u32 = 6002;
 pub const ERR_HABIT_DESCRIPTION_TOO_LONG: u32 = 6003;
+pub const ERR_HABIT_NOT_ACTIVE: u32 = 6005;
+pub const ERR_INVALID_CHECK_IN_DAY: u32 = 6006;
 
 const SYSTEM_PROGRAM_ID: Address = Address::new_from_array([0u8; 32]);
 
@@ -53,6 +55,14 @@ pub fn profile_pda(authority: &Address) -> (Address, u8) {
 pub fn habit_pda(owner: &Address, habit_id: u64) -> (Address, u8) {
     Address::find_program_address(
         &[HABIT_SEED, owner.as_ref(), &habit_id.to_le_bytes()],
+        &PROGRAM_ID,
+    )
+}
+
+/// Derives the DailyCheckIn PDA for a habit and UTC day index.
+pub fn daily_checkin_pda(habit: &Address, day: i64) -> (Address, u8) {
+    Address::find_program_address(
+        &[CHECKIN_SEED, habit.as_ref(), &day.to_le_bytes()],
         &PROGRAM_ID,
     )
 }
@@ -146,6 +156,54 @@ pub fn update_habit_ix(
     }
 }
 
+/// Builds `check_in` for a habit on a specific UTC day index.
+pub fn check_in_ix(owner: &Address, habit_id: u64, day: i64) -> Instruction {
+    let (habit, _bump) = habit_pda(owner, habit_id);
+    let (daily_check_in, _bump) = daily_checkin_pda(&habit, day);
+
+    let mut data = anchor_discriminator("check_in").to_vec();
+    data.extend_from_slice(&day.to_le_bytes());
+
+    Instruction {
+        program_id: PROGRAM_ID,
+        accounts: vec![
+            AccountMeta::new(*owner, true),
+            AccountMeta::new(habit, false),
+            AccountMeta::new(daily_check_in, false),
+            AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
+        ],
+        data,
+    }
+}
+
+/// Builds `pause_habit` for the habit's owner.
+pub fn pause_habit_ix(owner: &Address, habit_id: u64) -> Instruction {
+    let (habit, _bump) = habit_pda(owner, habit_id);
+
+    Instruction {
+        program_id: PROGRAM_ID,
+        accounts: vec![
+            AccountMeta::new_readonly(*owner, true),
+            AccountMeta::new(habit, false),
+        ],
+        data: anchor_discriminator("pause_habit").to_vec(),
+    }
+}
+
+/// Builds `archive_habit` for the habit's owner.
+pub fn archive_habit_ix(owner: &Address, habit_id: u64) -> Instruction {
+    let (habit, _bump) = habit_pda(owner, habit_id);
+
+    Instruction {
+        program_id: PROGRAM_ID,
+        accounts: vec![
+            AccountMeta::new_readonly(*owner, true),
+            AccountMeta::new(habit, false),
+        ],
+        data: anchor_discriminator("archive_habit").to_vec(),
+    }
+}
+
 /// Signs and sends a transaction through LiteSVM.
 pub fn send(
     svm: &mut LiteSVM,
@@ -189,6 +247,22 @@ pub fn read_habit(svm: &LiteSVM, owner: &Address, habit_id: u64) -> Habit {
 /// Returns the expected serialized Habit length, including the discriminator.
 pub fn expected_habit_len() -> usize {
     8 + Habit::INIT_SPACE
+}
+
+/// Reads and deserializes a DailyCheckIn PDA.
+pub fn read_checkin(svm: &LiteSVM, habit: &Address, day: i64) -> DailyCheckIn {
+    let (checkin_pda, _bump) = daily_checkin_pda(habit, day);
+    let account = svm
+        .get_account(&checkin_pda)
+        .expect("daily check-in account should exist");
+
+    let mut data = account.data.as_slice();
+    DailyCheckIn::try_deserialize(&mut data).expect("daily check-in account should deserialize")
+}
+
+/// Returns the expected serialized DailyCheckIn length, including the discriminator.
+pub fn expected_checkin_len() -> usize {
+    8 + DailyCheckIn::INIT_SPACE
 }
 
 /// Extracts an Anchor custom error code from a failed transaction, if present.
