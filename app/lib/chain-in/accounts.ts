@@ -49,9 +49,14 @@ async function fetchDecodedAccount<T>(
   rpc: ChainInRpc,
   accountAddress: Address,
   decoder: (data: ReadonlyUint8Array) => T,
-  accountName: string
+  accountName: string,
+  signal?: AbortSignal
 ): Promise<DecodedAccount<T> | null> {
-  const account = await fetchEncodedAccount(rpc, accountAddress);
+  const account = await fetchEncodedAccount(
+    rpc,
+    accountAddress,
+    signal ? { abortSignal: signal } : undefined
+  );
 
   if (!account.exists) {
     return null;
@@ -69,14 +74,16 @@ async function fetchDecodedAccount<T>(
 /** Fetches the `Profile` PDA for a wallet, or `null` when uninitialized. */
 export async function fetchProfile(
   rpc: ChainInRpc,
-  authority: Address
+  authority: Address,
+  signal?: AbortSignal
 ): Promise<DecodedAccount<Profile> | null> {
   const profileAddress = await deriveProfileAddress(authority);
   return fetchDecodedAccount(
     rpc,
     profileAddress,
     decodeProfileAccount,
-    "Profile"
+    "Profile",
+    signal
   );
 }
 
@@ -84,24 +91,33 @@ export async function fetchProfile(
 export async function fetchHabit(
   rpc: ChainInRpc,
   owner: Address,
-  habitId: bigint
+  habitId: bigint,
+  signal?: AbortSignal
 ): Promise<DecodedAccount<Habit> | null> {
   const habitAddress = await deriveHabitAddress(owner, habitId);
-  return fetchDecodedAccount(rpc, habitAddress, decodeHabitAccount, "Habit");
+  return fetchDecodedAccount(
+    rpc,
+    habitAddress,
+    decodeHabitAccount,
+    "Habit",
+    signal
+  );
 }
 
 /** Fetches a `DailyCheckIn` account by habit and UTC day, or `null`. */
 export async function fetchDailyCheckIn(
   rpc: ChainInRpc,
   habit: Address,
-  day: bigint
+  day: bigint,
+  signal?: AbortSignal
 ): Promise<DecodedAccount<DailyCheckIn> | null> {
   const checkInAddress = await deriveDailyCheckInAddress(habit, day);
   return fetchDecodedAccount(
     rpc,
     checkInAddress,
     decodeDailyCheckInAccount,
-    "DailyCheckIn"
+    "DailyCheckIn",
+    signal
   );
 }
 
