@@ -27,6 +27,10 @@ pub const ERR_HABIT_NAME_TOO_LONG: u32 = 6002;
 pub const ERR_HABIT_DESCRIPTION_TOO_LONG: u32 = 6003;
 pub const ERR_HABIT_NOT_ACTIVE: u32 = 6005;
 pub const ERR_INVALID_CHECK_IN_DAY: u32 = 6006;
+pub const ERR_HABIT_NOT_PAUSEABLE: u32 = 6008;
+pub const ERR_HABIT_NOT_RESUMABLE: u32 = 6009;
+pub const ERR_HABIT_NOT_ARCHIVABLE: u32 = 6010;
+pub const ERR_HABIT_NOT_CLOSABLE: u32 = 6011;
 
 const SYSTEM_PROGRAM_ID: Address = Address::new_from_array([0u8; 32]);
 
@@ -190,6 +194,20 @@ pub fn pause_habit_ix(owner: &Address, habit_id: u64) -> Instruction {
     }
 }
 
+/// Builds `resume_habit` for the habit's owner.
+pub fn resume_habit_ix(owner: &Address, habit_id: u64) -> Instruction {
+    let (habit, _bump) = habit_pda(owner, habit_id);
+
+    Instruction {
+        program_id: PROGRAM_ID,
+        accounts: vec![
+            AccountMeta::new_readonly(*owner, true),
+            AccountMeta::new(habit, false),
+        ],
+        data: anchor_discriminator("resume_habit").to_vec(),
+    }
+}
+
 /// Builds `archive_habit` for the habit's owner.
 pub fn archive_habit_ix(owner: &Address, habit_id: u64) -> Instruction {
     let (habit, _bump) = habit_pda(owner, habit_id);
@@ -201,6 +219,18 @@ pub fn archive_habit_ix(owner: &Address, habit_id: u64) -> Instruction {
             AccountMeta::new(habit, false),
         ],
         data: anchor_discriminator("archive_habit").to_vec(),
+    }
+}
+
+/// Builds `close_habit` for a signer and an explicit habit account.
+pub fn close_habit_ix(signer: &Address, habit: &Address) -> Instruction {
+    Instruction {
+        program_id: PROGRAM_ID,
+        accounts: vec![
+            AccountMeta::new(*signer, true),
+            AccountMeta::new(*habit, false),
+        ],
+        data: anchor_discriminator("close_habit").to_vec(),
     }
 }
 
