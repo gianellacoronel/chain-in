@@ -6,18 +6,25 @@
 #![allow(dead_code)]
 
 use anchor_lang::{AccountDeserialize, Space};
-use chain_in::{PROFILE_SEED, Profile};
+use chain_in::{HABIT_SEED, PROFILE_SEED, Habit, Profile};
 use litesvm::LiteSVM;
 use sha2::{Digest, Sha256};
 use solana_address::{Address, address};
 use solana_clock::Clock;
-use solana_instruction::{AccountMeta, Instruction};
+use solana_instruction::{AccountMeta, Instruction, error::InstructionError};
 use solana_keypair::Keypair;
 use solana_message::Message;
 use solana_signer::Signer;
 use solana_transaction::Transaction;
+use solana_transaction_error::TransactionError;
 
 pub const PROGRAM_ID: Address = address!("Eai82xNfih16jrTcQktnKaAYWG9hkvUuQ6uRGPtDsWwM");
+
+/// Anchor custom error codes for `ErrorCode`, starting at the 6000 offset.
+pub const ERR_UNAUTHORIZED_PROFILE: u32 = 6000;
+pub const ERR_UNAUTHORIZED_HABIT: u32 = 6001;
+pub const ERR_HABIT_NAME_TOO_LONG: u32 = 6002;
+pub const ERR_HABIT_DESCRIPTION_TOO_LONG: u32 = 6003;
 
 const SYSTEM_PROGRAM_ID: Address = Address::new_from_array([0u8; 32]);
 
@@ -42,6 +49,14 @@ pub fn profile_pda(authority: &Address) -> (Address, u8) {
     Address::find_program_address(&[PROFILE_SEED, authority.as_ref()], &PROGRAM_ID)
 }
 
+/// Derives the Habit PDA for an owner and sequential habit ID.
+pub fn habit_pda(owner: &Address, habit_id: u64) -> (Address, u8) {
+    Address::find_program_address(
+        &[HABIT_SEED, owner.as_ref(), &habit_id.to_le_bytes()],
+        &PROGRAM_ID,
+    )
+}
+
 /// Computes an Anchor instruction discriminator: `sha256("global:<name>")[..8]`.
 pub fn anchor_discriminator(name: &str) -> [u8; 8] {
     let digest = Sha256::digest(format!("global:{name}").as_bytes());
@@ -62,6 +77,72 @@ pub fn initialize_profile_ix(authority: &Address) -> Instruction {
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ],
         data: anchor_discriminator("initialize_profile").to_vec(),
+    }
+}
+
+/// Borsh-encodes a `String`: u32 little-endian byte length followed by UTF-8 bytes.
+pub fn borsh_string(value: &str) -> Vec<u8> {
+    let mut encoded = Vec::with_capacity(4 + value.len());
+    encoded.extend_from_slice(&(value.len() as u32).to_le_bytes());
+    encoded.extend_from_slice(value.as_bytes());
+    encoded
+}
+
+/// Builds `create_habit` using the signer's own Profile PDA.
+pub fn create_habit_ix(
+    owner: &Address,
+    habit_id: u64,
+    name: &str,
+    description: &str,
+) -> Instruction {
+    let (profile, _bump) = profile_pda(owner);
+    create_habit_ix_with_profile(owner, &profile, habit_id, name, description)
+}
+
+/// Builds `create_habit` with an explicit Profile account, used for negative tests.
+pub fn create_habit_ix_with_profile(
+    owner: &Address,
+    profile: &Address,
+    habit_id: u64,
+    name: &str,
+    description: &str,
+) -> Instruction {
+    let (habit, _bump) = habit_pda(owner, habit_id);
+
+    let mut data = anchor_discriminator("create_habit").to_vec();
+    data.extend(borsh_string(name));
+    data.extend(borsh_string(description));
+
+    Instruction {
+        program_id: PROGRAM_ID,
+        accounts: vec![
+            AccountMeta::new(*owner, true),
+            AccountMeta::new(*profile, false),
+            AccountMeta::new(habit, false),
+            AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
+        ],
+        data,
+    }
+}
+
+/// Builds `update_habit` for a given signer and habit account.
+pub fn update_habit_ix(
+    signer: &Address,
+    habit: &Address,
+    name: &str,
+    description: &str,
+) -> Instruction {
+    let mut data = anchor_discriminator("update_habit").to_vec();
+    data.extend(borsh_string(name));
+    data.extend(borsh_string(description));
+
+    Instruction {
+        program_id: PROGRAM_ID,
+        accounts: vec![
+            AccountMeta::new_readonly(*signer, true),
+            AccountMeta::new(*habit, false),
+        ],
+        data,
     }
 }
 
@@ -92,6 +173,33 @@ pub fn read_profile(svm: &LiteSVM, authority: &Address) -> Profile {
 /// Returns the expected serialized Profile length, including the discriminator.
 pub fn expected_profile_len() -> usize {
     8 + Profile::INIT_SPACE
+}
+
+/// Reads and deserializes a Habit PDA.
+pub fn read_habit(svm: &LiteSVM, owner: &Address, habit_id: u64) -> Habit {
+    let (habit_pda, _bump) = habit_pda(owner, habit_id);
+    let account = svm
+        .get_account(&habit_pda)
+        .expect("habit account should exist");
+
+    let mut data = account.data.as_slice();
+    Habit::try_deserialize(&mut data).expect("habit account should deserialize")
+}
+
+/// Returns the expected serialized Habit length, including the discriminator.
+pub fn expected_habit_len() -> usize {
+    8 + Habit::INIT_SPACE
+}
+
+/// Extracts an Anchor custom error code from a failed transaction, if present.
+pub fn custom_error(result: &litesvm::types::TransactionResult) -> Option<u32> {
+    match result {
+        Ok(_) => None,
+        Err(failed) => match &failed.err {
+            TransactionError::InstructionError(_, InstructionError::Custom(code)) => Some(*code),
+            _ => None,
+        },
+    }
 }
 
 /// Overrides the LiteSVM Clock sysvar with a deterministic timestamp.
