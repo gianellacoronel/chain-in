@@ -124,7 +124,8 @@ export async function fetchDailyCheckIn(
 /** Lists every `Habit` owned by a wallet, sorted by habit ID ascending. */
 export async function fetchHabitsByOwner(
   rpc: ChainInRpc,
-  owner: Address
+  owner: Address,
+  signal?: AbortSignal
 ): Promise<DecodedAccount<Habit>[]> {
   const response = await rpc
     .getProgramAccounts(CHAIN_IN_PROGRAM_ADDRESS, {
@@ -147,7 +148,7 @@ export async function fetchHabitsByOwner(
         },
       ],
     })
-    .send();
+    .send(signal ? { abortSignal: signal } : undefined);
 
   return response
     .map(({ pubkey, account }) => ({

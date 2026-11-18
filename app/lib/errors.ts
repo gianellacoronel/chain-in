@@ -13,6 +13,11 @@ export function parseTransactionError(err: unknown): string {
     return "Transaction was rejected by the wallet.";
   }
 
+  return getErrorMessage(err);
+}
+
+/** Returns the deepest available error message, truncated for display. */
+export function getErrorMessage(err: unknown): string {
   const message = getDeepestMessage(err);
   return message.length > 200 ? `${message.slice(0, 200)}...` : message;
 }

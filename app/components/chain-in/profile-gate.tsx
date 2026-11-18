@@ -11,6 +11,7 @@ import { useChainInActions } from "../../lib/hooks/use-chain-in-actions";
 import { useProfile } from "../../lib/hooks/use-profile";
 import { useAppClient } from "../../lib/client-provider";
 import { ellipsify } from "../../lib/explorer";
+import { getErrorMessage } from "../../lib/errors";
 import { useCluster } from "../cluster-context";
 
 const subscribeToHydration = () => () => {};
@@ -167,8 +168,4 @@ function StatusCard({
       {children}
     </div>
   );
-}
-
-function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Unknown RPC error.";
 }

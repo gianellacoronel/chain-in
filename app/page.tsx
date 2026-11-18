@@ -1,6 +1,6 @@
 "use client";
 
-import { getUnixDay, formatUnixDay } from "./lib/chain-in";
+import { ChainInDashboard } from "./components/chain-in/dashboard";
 import { ProfileGate } from "./components/chain-in/profile-gate";
 
 export default function Home() {
@@ -14,41 +14,7 @@ export default function Home() {
 
       <ProfileGate>
         {({ profile, refresh }) => (
-          <section className="mt-8 rounded-2xl border border-border-low bg-card p-6">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-semibold">Profile ready</h2>
-                <p className="mt-1 text-xs text-muted">
-                  This wallet has an initialized Chain-In profile on Solana.
-                </p>
-              </div>
-              <button
-                onClick={() => refresh()}
-                className="cursor-pointer rounded-lg border border-border-low bg-card px-3 py-2 text-xs font-medium transition hover:bg-cream"
-              >
-                Refresh
-              </button>
-            </div>
-
-            <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-border-low bg-cream/50 px-3 py-2">
-                <dt className="text-[11px] font-medium tracking-wide text-muted uppercase">
-                  Habits created
-                </dt>
-                <dd className="mt-0.5 text-sm font-semibold tabular-nums">
-                  {profile.data.nextHabitId.toString()}
-                </dd>
-              </div>
-              <div className="rounded-lg border border-border-low bg-cream/50 px-3 py-2">
-                <dt className="text-[11px] font-medium tracking-wide text-muted uppercase">
-                  Created
-                </dt>
-                <dd className="mt-0.5 text-sm font-semibold">
-                  {formatUnixDay(getUnixDay(profile.data.createdAt))}
-                </dd>
-              </div>
-            </dl>
-          </section>
+          <ChainInDashboard profile={profile} refreshProfile={refresh} />
         )}
       </ProfileGate>
     </main>
