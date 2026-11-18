@@ -1,0 +1,557 @@
+{
+  "address": "Eai82xNfih16jrTcQktnKaAYWG9hkvUuQ6uRGPtDsWwM",
+  "metadata": {
+    "name": "chain_in",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "archive_habit",
+      "discriminator": [79, 105, 54, 246, 225, 229, 147, 123],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": ["habit"]
+        },
+        {
+          "name": "habit",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [104, 97, 98, 105, 116]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "habit.id",
+                "account": "Habit"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "check_in",
+      "discriminator": [209, 253, 4, 217, 250, 241, 207, 50],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true,
+          "relations": ["habit"]
+        },
+        {
+          "name": "habit",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [104, 97, 98, 105, 116]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "habit.id",
+                "account": "Habit"
+              }
+            ]
+          }
+        },
+        {
+          "name": "daily_check_in",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [99, 104, 101, 99, 107, 105, 110]
+              },
+              {
+                "kind": "account",
+                "path": "habit"
+              },
+              {
+                "kind": "arg",
+                "path": "day"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "day",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "close_habit",
+      "discriminator": [239, 79, 40, 126, 253, 236, 213, 185],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true,
+          "relations": ["habit"]
+        },
+        {
+          "name": "habit",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [104, 97, 98, 105, 116]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "habit.id",
+                "account": "Habit"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_habit",
+      "discriminator": [6, 233, 240, 164, 87, 155, 14, 8],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "profile",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [112, 114, 111, 102, 105, 108, 101]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "habit",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [104, 97, 98, 105, 116]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "profile.next_habit_id",
+                "account": "Profile"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "initialize_profile",
+      "discriminator": [32, 145, 77, 213, 58, 39, 251, 234],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "profile",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [112, 114, 111, 102, 105, 108, 101]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "pause_habit",
+      "discriminator": [236, 30, 189, 208, 10, 128, 67, 107],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": ["habit"]
+        },
+        {
+          "name": "habit",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [104, 97, 98, 105, 116]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "habit.id",
+                "account": "Habit"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "resume_habit",
+      "discriminator": [173, 166, 56, 139, 227, 97, 152, 172],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": ["habit"]
+        },
+        {
+          "name": "habit",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [104, 97, 98, 105, 116]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "habit.id",
+                "account": "Habit"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_habit",
+      "discriminator": [127, 103, 133, 37, 116, 2, 76, 47],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true,
+          "relations": ["habit"]
+        },
+        {
+          "name": "habit",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [104, 97, 98, 105, 116]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "habit.id",
+                "account": "Habit"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "DailyCheckIn",
+      "discriminator": [156, 67, 142, 102, 165, 5, 90, 22]
+    },
+    {
+      "name": "Habit",
+      "discriminator": [210, 33, 243, 232, 216, 99, 36, 217]
+    },
+    {
+      "name": "Profile",
+      "discriminator": [184, 101, 165, 188, 95, 63, 127, 188]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "UnauthorizedProfile",
+      "msg": "Signer is not the profile authority"
+    },
+    {
+      "code": 6001,
+      "name": "UnauthorizedHabit",
+      "msg": "Signer is not the habit owner"
+    },
+    {
+      "code": 6002,
+      "name": "HabitNameTooLong",
+      "msg": "Habit name exceeds the maximum byte length"
+    },
+    {
+      "code": 6003,
+      "name": "HabitDescriptionTooLong",
+      "msg": "Habit description exceeds the maximum byte length"
+    },
+    {
+      "code": 6004,
+      "name": "HabitIdOverflow",
+      "msg": "Habit ID overflow"
+    },
+    {
+      "code": 6005,
+      "name": "HabitNotActive",
+      "msg": "Only active habits can receive check-ins"
+    },
+    {
+      "code": 6006,
+      "name": "InvalidCheckInDay",
+      "msg": "Check-in day does not match the current UTC day"
+    },
+    {
+      "code": 6007,
+      "name": "StreakOverflow",
+      "msg": "Streak counter overflow"
+    },
+    {
+      "code": 6008,
+      "name": "HabitNotPauseable",
+      "msg": "Only active habits can be paused"
+    },
+    {
+      "code": 6009,
+      "name": "HabitNotResumable",
+      "msg": "Only paused habits can be resumed"
+    },
+    {
+      "code": 6010,
+      "name": "HabitNotArchivable",
+      "msg": "Only active or paused habits can be archived"
+    },
+    {
+      "code": 6011,
+      "name": "HabitNotClosable",
+      "msg": "Only archived habits can be closed"
+    }
+  ],
+  "types": [
+    {
+      "name": "DailyCheckIn",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "habit",
+            "type": "pubkey"
+          },
+          {
+            "name": "habit_id",
+            "type": "u64"
+          },
+          {
+            "name": "habit_name_snapshot",
+            "type": "string"
+          },
+          {
+            "name": "day",
+            "type": "i64"
+          },
+          {
+            "name": "checked_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Habit",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "HabitStatus"
+              }
+            }
+          },
+          {
+            "name": "current_streak",
+            "type": "u32"
+          },
+          {
+            "name": "longest_streak",
+            "type": "u32"
+          },
+          {
+            "name": "last_check_in_day",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HabitStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Paused"
+          },
+          {
+            "name": "Archived"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Profile",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "next_habit_id",
+            "type": "u64"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          }
+        ]
+      }
+    }
+  ],
+  "constants": [
+    {
+      "name": "CHECKIN_SEED",
+      "type": "bytes",
+      "value": "[99, 104, 101, 99, 107, 105, 110]"
+    },
+    {
+      "name": "HABIT_SEED",
+      "type": "bytes",
+      "value": "[104, 97, 98, 105, 116]"
+    },
+    {
+      "name": "PROFILE_SEED",
+      "type": "bytes",
+      "value": "[112, 114, 111, 102, 105, 108, 101]"
+    }
+  ]
+}

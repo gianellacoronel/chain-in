@@ -7,6 +7,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint",
+    "program:idl": "cp anchor/target/idl/chain_in.json app/lib/chain-in/idl/chain_in.json",
     "start": "next start",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
