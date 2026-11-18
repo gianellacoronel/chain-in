@@ -5,10 +5,11 @@
 
 #![allow(dead_code)]
 
-use anchor_lang::{AccountDeserialize, Space};
+use anchor_lang::{AccountDeserialize, AnchorSerialize, Discriminator, Space};
 use chain_in::{CHECKIN_SEED, DailyCheckIn, HABIT_SEED, PROFILE_SEED, Habit, Profile};
 use litesvm::LiteSVM;
 use sha2::{Digest, Sha256};
+use solana_account::Account;
 use solana_address::{Address, address};
 use solana_clock::Clock;
 use solana_instruction::{AccountMeta, Instruction, error::InstructionError};
@@ -25,14 +26,16 @@ pub const ERR_UNAUTHORIZED_PROFILE: u32 = 6000;
 pub const ERR_UNAUTHORIZED_HABIT: u32 = 6001;
 pub const ERR_HABIT_NAME_TOO_LONG: u32 = 6002;
 pub const ERR_HABIT_DESCRIPTION_TOO_LONG: u32 = 6003;
+pub const ERR_HABIT_ID_OVERFLOW: u32 = 6004;
 pub const ERR_HABIT_NOT_ACTIVE: u32 = 6005;
 pub const ERR_INVALID_CHECK_IN_DAY: u32 = 6006;
+pub const ERR_STREAK_OVERFLOW: u32 = 6007;
 pub const ERR_HABIT_NOT_PAUSEABLE: u32 = 6008;
 pub const ERR_HABIT_NOT_RESUMABLE: u32 = 6009;
 pub const ERR_HABIT_NOT_ARCHIVABLE: u32 = 6010;
 pub const ERR_HABIT_NOT_CLOSABLE: u32 = 6011;
 
-const SYSTEM_PROGRAM_ID: Address = Address::new_from_array([0u8; 32]);
+pub const SYSTEM_PROGRAM_ID: Address = Address::new_from_array([0u8; 32]);
 
 const PROGRAM_BYTES: &[u8] =
     include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/../../target/deploy/chain_in.so"));
@@ -164,7 +167,16 @@ pub fn update_habit_ix(
 pub fn check_in_ix(owner: &Address, habit_id: u64, day: i64) -> Instruction {
     let (habit, _bump) = habit_pda(owner, habit_id);
     let (daily_check_in, _bump) = daily_checkin_pda(&habit, day);
+    check_in_ix_with_checkin(owner, &habit, day, &daily_check_in)
+}
 
+/// Builds `check_in` with explicit habit and DailyCheckIn accounts, for negative tests.
+pub fn check_in_ix_with_checkin(
+    owner: &Address,
+    habit: &Address,
+    day: i64,
+    daily_check_in: &Address,
+) -> Instruction {
     let mut data = anchor_discriminator("check_in").to_vec();
     data.extend_from_slice(&day.to_le_bytes());
 
@@ -172,8 +184,8 @@ pub fn check_in_ix(owner: &Address, habit_id: u64, day: i64) -> Instruction {
         program_id: PROGRAM_ID,
         accounts: vec![
             AccountMeta::new(*owner, true),
-            AccountMeta::new(habit, false),
-            AccountMeta::new(daily_check_in, false),
+            AccountMeta::new(*habit, false),
+            AccountMeta::new(*daily_check_in, false),
             AccountMeta::new_readonly(SYSTEM_PROGRAM_ID, false),
         ],
         data,
@@ -183,43 +195,46 @@ pub fn check_in_ix(owner: &Address, habit_id: u64, day: i64) -> Instruction {
 /// Builds `pause_habit` for the habit's owner.
 pub fn pause_habit_ix(owner: &Address, habit_id: u64) -> Instruction {
     let (habit, _bump) = habit_pda(owner, habit_id);
+    pause_habit_ix_at(owner, &habit)
+}
 
-    Instruction {
-        program_id: PROGRAM_ID,
-        accounts: vec![
-            AccountMeta::new_readonly(*owner, true),
-            AccountMeta::new(habit, false),
-        ],
-        data: anchor_discriminator("pause_habit").to_vec(),
-    }
+/// Builds `pause_habit` for an explicit signer and habit account.
+pub fn pause_habit_ix_at(signer: &Address, habit: &Address) -> Instruction {
+    lifecycle_ix("pause_habit", signer, habit)
 }
 
 /// Builds `resume_habit` for the habit's owner.
 pub fn resume_habit_ix(owner: &Address, habit_id: u64) -> Instruction {
     let (habit, _bump) = habit_pda(owner, habit_id);
+    resume_habit_ix_at(owner, &habit)
+}
 
+/// Builds `resume_habit` for an explicit signer and habit account.
+pub fn resume_habit_ix_at(signer: &Address, habit: &Address) -> Instruction {
+    lifecycle_ix("resume_habit", signer, habit)
+}
+
+/// Builds a simple status-change instruction for an explicit signer and habit account.
+fn lifecycle_ix(name: &str, signer: &Address, habit: &Address) -> Instruction {
     Instruction {
         program_id: PROGRAM_ID,
         accounts: vec![
-            AccountMeta::new_readonly(*owner, true),
-            AccountMeta::new(habit, false),
+            AccountMeta::new_readonly(*signer, true),
+            AccountMeta::new(*habit, false),
         ],
-        data: anchor_discriminator("resume_habit").to_vec(),
+        data: anchor_discriminator(name).to_vec(),
     }
 }
 
 /// Builds `archive_habit` for the habit's owner.
 pub fn archive_habit_ix(owner: &Address, habit_id: u64) -> Instruction {
     let (habit, _bump) = habit_pda(owner, habit_id);
+    archive_habit_ix_at(owner, &habit)
+}
 
-    Instruction {
-        program_id: PROGRAM_ID,
-        accounts: vec![
-            AccountMeta::new_readonly(*owner, true),
-            AccountMeta::new(habit, false),
-        ],
-        data: anchor_discriminator("archive_habit").to_vec(),
-    }
+/// Builds `archive_habit` for an explicit signer and habit account.
+pub fn archive_habit_ix_at(signer: &Address, habit: &Address) -> Instruction {
+    lifecycle_ix("archive_habit", signer, habit)
 }
 
 /// Builds `close_habit` for a signer and an explicit habit account.
@@ -293,6 +308,67 @@ pub fn read_checkin(svm: &LiteSVM, habit: &Address, day: i64) -> DailyCheckIn {
 /// Returns the expected serialized DailyCheckIn length, including the discriminator.
 pub fn expected_checkin_len() -> usize {
     8 + DailyCheckIn::INIT_SPACE
+}
+
+/// Serializes an Anchor account value with its 8-byte discriminator prefix.
+pub fn serialize_account<T: AnchorSerialize + Discriminator>(value: &T) -> Vec<u8> {
+    let mut data = T::DISCRIMINATOR.to_vec();
+    data.extend(borsh::to_vec(value).expect("account should serialize"));
+    data
+}
+
+/// Overwrites an arbitrary account in LiteSVM with explicit owner and data.
+pub fn write_raw_account(svm: &mut LiteSVM, address: Address, owner: Address, data: Vec<u8>) {
+    let lamports = svm.minimum_balance_for_rent_exemption(data.len());
+    svm.set_account(
+        address,
+        Account {
+            lamports,
+            data,
+            owner,
+            executable: false,
+            rent_epoch: 0,
+        },
+    )
+    .expect("raw account should be writable");
+}
+
+/// Overwrites the Profile PDA with the provided state.
+pub fn overwrite_profile(svm: &mut LiteSVM, profile: &Profile) {
+    let authority = Address::new_from_array(profile.authority.to_bytes());
+    let (address, _bump) = profile_pda(&authority);
+    let data = serialize_account(profile);
+    let lamports = svm.minimum_balance_for_rent_exemption(data.len());
+    svm.set_account(
+        address,
+        Account {
+            lamports,
+            data,
+            owner: PROGRAM_ID,
+            executable: false,
+            rent_epoch: 0,
+        },
+    )
+    .expect("profile account should be writable");
+}
+
+/// Overwrites the Habit PDA with the provided state.
+pub fn overwrite_habit(svm: &mut LiteSVM, habit: &Habit) {
+    let owner = Address::new_from_array(habit.owner.to_bytes());
+    let (address, _bump) = habit_pda(&owner, habit.id);
+    let data = serialize_account(habit);
+    let lamports = svm.minimum_balance_for_rent_exemption(data.len());
+    svm.set_account(
+        address,
+        Account {
+            lamports,
+            data,
+            owner: PROGRAM_ID,
+            executable: false,
+            rent_epoch: 0,
+        },
+    )
+    .expect("habit account should be writable");
 }
 
 /// Extracts an Anchor custom error code from a failed transaction, if present.

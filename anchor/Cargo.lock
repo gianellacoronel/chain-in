@@ -838,8 +838,10 @@ name = "chain_in"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "borsh",
  "litesvm",
  "sha2 0.10.9",
+ "solana-account",
  "solana-address 2.9.0",
  "solana-clock 3.2.1",
  "solana-instruction 3.5.1",
