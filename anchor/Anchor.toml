@@ -9,6 +9,9 @@ skip-lint = false
 [programs.localnet]
 chain_in = "Eai82xNfih16jrTcQktnKaAYWG9hkvUuQ6uRGPtDsWwM"
 
+[programs.devnet]
+chain_in = "Eai82xNfih16jrTcQktnKaAYWG9hkvUuQ6uRGPtDsWwM"
+
 [provider]
 cluster = "localnet"
 wallet = "~/.config/solana/id.json"
