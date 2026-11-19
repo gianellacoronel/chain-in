@@ -33,7 +33,17 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 export function HabitDetail({ habit, onSettled, onClose }: HabitDetailProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const { checkIn, isSending } = useChainInActions();
+  const [confirming, setConfirming] = useState<"archive" | "close" | null>(
+    null
+  );
+  const {
+    checkIn,
+    pauseHabit,
+    resumeHabit,
+    archiveHabit,
+    closeHabit,
+    isSending,
+  } = useChainInActions();
   const { isCheckedIn, refresh: refreshCheckIn } = useTodayCheckIn(
     habit.data.status === HabitStatus.Active ? habit.address : undefined
   );
@@ -42,6 +52,34 @@ export function HabitDetail({ habit, onSettled, onClose }: HabitDetailProps) {
     const signature = await checkIn({ owner: habit.data.owner, habit });
     refreshCheckIn();
     if (signature) onSettled();
+  };
+
+  const handlePause = async () => {
+    const signature = await pauseHabit({ owner: habit.data.owner, habit });
+    if (signature) onSettled();
+  };
+
+  const handleResume = async () => {
+    const signature = await resumeHabit({ owner: habit.data.owner, habit });
+    if (signature) onSettled();
+  };
+
+  const handleArchive = async () => {
+    setConfirming(null);
+    const signature = await archiveHabit({ owner: habit.data.owner, habit });
+    if (signature) {
+      onSettled();
+      onClose();
+    }
+  };
+
+  const handleClose = async () => {
+    setConfirming(null);
+    const signature = await closeHabit({ owner: habit.data.owner, habit });
+    if (signature) {
+      onSettled();
+      onClose();
+    }
   };
 
   const { id, name, description, status, currentStreak, longestStreak } =
@@ -122,13 +160,101 @@ export function HabitDetail({ habit, onSettled, onClose }: HabitDetailProps) {
                     : "Check in today"}
               </button>
             )}
+            {status === HabitStatus.Active && (
+              <button
+                onClick={handlePause}
+                disabled={isSending}
+                className="cursor-pointer rounded-lg border border-border-low bg-card px-4 py-2 text-sm font-medium transition hover:bg-cream disabled:pointer-events-none disabled:opacity-50"
+              >
+                Pause
+              </button>
+            )}
+            {status === HabitStatus.Paused && (
+              <button
+                onClick={handleResume}
+                disabled={isSending}
+                className="cursor-pointer rounded-lg border border-border-low bg-card px-4 py-2 text-sm font-medium transition hover:bg-cream disabled:pointer-events-none disabled:opacity-50"
+              >
+                Resume
+              </button>
+            )}
+            {(status === HabitStatus.Active ||
+              status === HabitStatus.Paused) && (
+              <button
+                onClick={() => setConfirming("archive")}
+                disabled={isSending}
+                className="cursor-pointer rounded-lg border border-border-low bg-card px-4 py-2 text-sm font-medium transition hover:bg-cream disabled:pointer-events-none disabled:opacity-50"
+              >
+                Archive
+              </button>
+            )}
+            {status === HabitStatus.Archived && (
+              <button
+                onClick={() => setConfirming("close")}
+                disabled={isSending}
+                className="cursor-pointer rounded-lg border border-destructive/40 bg-card px-4 py-2 text-sm font-medium text-destructive transition hover:bg-destructive/10 disabled:pointer-events-none disabled:opacity-50"
+              >
+                Close (return rent)
+              </button>
+            )}
             <button
               onClick={() => setIsEditing(true)}
-              className="cursor-pointer rounded-lg border border-border-low bg-card px-4 py-2 text-sm font-medium transition hover:bg-cream"
+              disabled={isSending}
+              className="cursor-pointer rounded-lg border border-border-low bg-card px-4 py-2 text-sm font-medium transition hover:bg-cream disabled:pointer-events-none disabled:opacity-50"
             >
               Edit habit
             </button>
           </div>
+
+          {confirming === "archive" && (
+            <div className="mt-3 rounded-lg border border-border-low bg-cream/50 p-3 text-xs">
+              <p className="font-medium">
+                Archive this habit? It will no longer accept check-ins.
+              </p>
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={handleArchive}
+                  disabled={isSending}
+                  className="cursor-pointer rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-xs transition hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {isSending ? "Archiving..." : "Confirm archive"}
+                </button>
+                <button
+                  onClick={() => setConfirming(null)}
+                  disabled={isSending}
+                  className="cursor-pointer rounded-lg border border-border-low bg-card px-3 py-1.5 text-xs font-medium transition hover:bg-cream disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {confirming === "close" && (
+            <div className="mt-3 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs">
+              <p className="font-medium text-destructive">
+                Close this habit permanently? Its rent will be returned to your
+                wallet and the account will disappear, but check-in history is
+                preserved.
+              </p>
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={handleClose}
+                  disabled={isSending}
+                  className="cursor-pointer rounded-lg bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground shadow-xs transition hover:bg-destructive/90 disabled:opacity-50"
+                >
+                  {isSending ? "Closing..." : "Confirm close"}
+                </button>
+                <button
+                  onClick={() => setConfirming(null)}
+                  disabled={isSending}
+                  className="cursor-pointer rounded-lg border border-border-low bg-card px-3 py-1.5 text-xs font-medium transition hover:bg-cream disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
     </section>

@@ -6,10 +6,14 @@ import {
   deriveDailyCheckInAddress,
   deriveHabitAddress,
   deriveProfileAddress,
+  getArchiveHabitInstruction,
   getChainInErrorMessage,
   getCheckInInstruction,
+  getCloseHabitInstruction,
   getCreateHabitInstruction,
   getInitializeProfileInstruction,
+  getPauseHabitInstruction,
+  getResumeHabitInstruction,
   getTodayUnixDay,
   getUpdateHabitInstruction,
   type DecodedAccount,
@@ -147,5 +151,91 @@ export function useChainInActions() {
     [client, run]
   );
 
-  return { initializeProfile, createHabit, updateHabit, checkIn, isSending };
+  const pauseHabit = useCallback(
+    async ({
+      owner,
+      habit,
+    }: {
+      owner: Address;
+      habit: DecodedAccount<Habit>;
+    }) =>
+      run(
+        () =>
+          client.sendTransaction([
+            getPauseHabitInstruction({ owner, habit: habit.address }),
+          ]),
+        "Habit paused",
+        getChainInErrorMessage
+      ),
+    [client, run]
+  );
+
+  const resumeHabit = useCallback(
+    async ({
+      owner,
+      habit,
+    }: {
+      owner: Address;
+      habit: DecodedAccount<Habit>;
+    }) =>
+      run(
+        () =>
+          client.sendTransaction([
+            getResumeHabitInstruction({ owner, habit: habit.address }),
+          ]),
+        "Habit resumed",
+        getChainInErrorMessage
+      ),
+    [client, run]
+  );
+
+  const archiveHabit = useCallback(
+    async ({
+      owner,
+      habit,
+    }: {
+      owner: Address;
+      habit: DecodedAccount<Habit>;
+    }) =>
+      run(
+        () =>
+          client.sendTransaction([
+            getArchiveHabitInstruction({ owner, habit: habit.address }),
+          ]),
+        "Habit archived",
+        getChainInErrorMessage
+      ),
+    [client, run]
+  );
+
+  const closeHabit = useCallback(
+    async ({
+      owner,
+      habit,
+    }: {
+      owner: Address;
+      habit: DecodedAccount<Habit>;
+    }) =>
+      run(
+        () =>
+          client.sendTransaction([
+            getCloseHabitInstruction({ owner, habit: habit.address }),
+          ]),
+        "Habit closed",
+        getChainInErrorMessage
+      ),
+    [client, run]
+  );
+
+  return {
+    initializeProfile,
+    createHabit,
+    updateHabit,
+    checkIn,
+    pauseHabit,
+    resumeHabit,
+    archiveHabit,
+    closeHabit,
+    isSending,
+  };
 }
