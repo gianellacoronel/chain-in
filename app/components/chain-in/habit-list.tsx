@@ -1,3 +1,4 @@
+import type { Address } from "@solana/kit";
 import type { DecodedAccount, Habit } from "../../lib/chain-in";
 import { getErrorMessage } from "../../lib/errors";
 import { HabitCard } from "./habit-card";
@@ -6,6 +7,8 @@ type HabitListProps = {
   habits: DecodedAccount<Habit>[] | undefined;
   status: "disabled" | "error" | "fetching" | "success";
   error: unknown;
+  selectedAddress: Address | null;
+  onSelect: (address: Address) => void;
   onRefresh: () => void;
 };
 
@@ -13,6 +16,8 @@ export function HabitList({
   habits,
   status,
   error,
+  selectedAddress,
+  onSelect,
   onRefresh,
 }: HabitListProps) {
   if (status === "error" && habits === undefined) {
@@ -77,7 +82,12 @@ export function HabitList({
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {habits.map((habit) => (
-          <HabitCard key={habit.address} habit={habit} />
+          <HabitCard
+            key={habit.address}
+            habit={habit}
+            isSelected={habit.address === selectedAddress}
+            onSelect={onSelect}
+          />
         ))}
       </div>
     </section>

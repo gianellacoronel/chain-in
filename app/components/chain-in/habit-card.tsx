@@ -1,8 +1,15 @@
+import type { Address } from "@solana/kit";
 import type { DecodedAccount, Habit } from "../../lib/chain-in";
 import { formatUnixDay } from "../../lib/chain-in";
 import { StatusBadge } from "./status-badge";
 
-export function HabitCard({ habit }: { habit: DecodedAccount<Habit> }) {
+type HabitCardProps = {
+  habit: DecodedAccount<Habit>;
+  isSelected: boolean;
+  onSelect: (address: Address) => void;
+};
+
+export function HabitCard({ habit, isSelected, onSelect }: HabitCardProps) {
   const {
     name,
     description,
@@ -13,7 +20,13 @@ export function HabitCard({ habit }: { habit: DecodedAccount<Habit> }) {
   } = habit.data;
 
   return (
-    <article className="rounded-2xl border border-border-low bg-card p-5">
+    <article
+      className={`rounded-2xl border bg-card p-5 transition ${
+        isSelected
+          ? "border-primary/50 ring-2 ring-primary/10"
+          : "border-border-low"
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold">{name}</h3>
@@ -43,10 +56,19 @@ export function HabitCard({ habit }: { habit: DecodedAccount<Habit> }) {
         </div>
       </dl>
 
-      <p className="mt-3 text-[11px] text-muted">
-        Last check-in:{" "}
-        {lastCheckInDay === null ? "Never" : formatUnixDay(lastCheckInDay)}
-      </p>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <p className="text-[11px] text-muted">
+          Last check-in:{" "}
+          {lastCheckInDay === null ? "Never" : formatUnixDay(lastCheckInDay)}
+        </p>
+        <button
+          onClick={() => onSelect(habit.address)}
+          aria-expanded={isSelected}
+          className="cursor-pointer rounded-lg border border-border-low bg-card px-2.5 py-1 text-[11px] font-medium transition hover:bg-cream"
+        >
+          {isSelected ? "Hide details" : "Manage"}
+        </button>
+      </div>
     </article>
   );
 }

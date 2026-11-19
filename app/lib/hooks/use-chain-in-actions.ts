@@ -8,7 +8,9 @@ import {
   getChainInErrorMessage,
   getCreateHabitInstruction,
   getInitializeProfileInstruction,
+  getUpdateHabitInstruction,
   type DecodedAccount,
+  type Habit,
   type Profile,
 } from "../chain-in";
 import { useAppClient } from "../client-provider";
@@ -72,5 +74,36 @@ export function useChainInActions() {
     [client, run]
   );
 
-  return { initializeProfile, createHabit, isSending };
+  const updateHabit = useCallback(
+    async ({
+      owner,
+      habit,
+      name,
+      description,
+    }: {
+      owner: Address;
+      habit: DecodedAccount<Habit>;
+      name: string;
+      description: string;
+    }) => {
+      // The program checks ownership and string lengths only; the status does
+      // not restrict updates, so paused and archived habits can be edited too.
+      return run(
+        () =>
+          client.sendTransaction([
+            getUpdateHabitInstruction({
+              owner,
+              habit: habit.address,
+              name,
+              description,
+            }),
+          ]),
+        "Habit updated",
+        getChainInErrorMessage
+      );
+    },
+    [client, run]
+  );
+
+  return { initializeProfile, createHabit, updateHabit, isSending };
 }
