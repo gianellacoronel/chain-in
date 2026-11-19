@@ -9,6 +9,7 @@ import {
   type Habit,
 } from "../../lib/chain-in";
 import { useChainInActions } from "../../lib/hooks/use-chain-in-actions";
+import { useCheckIns } from "../../lib/hooks/use-check-ins";
 import { useTodayCheckIn } from "../../lib/hooks/use-today-check-in";
 import { EditHabitForm } from "./edit-habit-form";
 import { StatusBadge } from "./status-badge";
@@ -46,6 +47,10 @@ export function HabitDetail({ habit, onSettled, onClose }: HabitDetailProps) {
   } = useChainInActions();
   const { isCheckedIn, refresh: refreshCheckIn } = useTodayCheckIn(
     habit.data.status === HabitStatus.Active ? habit.address : undefined
+  );
+  const { checkIns } = useCheckIns(habit.data.owner);
+  const habitCheckIns = (checkIns ?? []).filter(
+    (entry) => entry.data.habit === habit.address
   );
 
   const handleCheckIn = async () => {
@@ -145,6 +150,39 @@ export function HabitDetail({ habit, onSettled, onClose }: HabitDetailProps) {
               value={formatUnixDay(getUnixDay(habit.data.createdAt))}
             />
           </dl>
+
+          {habitCheckIns.length > 0 && (
+            <div className="mt-4">
+              <p className="text-[11px] font-medium tracking-wide text-muted uppercase">
+                Check-in history ({habitCheckIns.length})
+              </p>
+              <ul className="mt-2 divide-y divide-border-low overflow-hidden rounded-lg border border-border-low bg-cream/30">
+                {habitCheckIns.slice(0, 5).map((entry) => (
+                  <li
+                    key={entry.address}
+                    className="flex items-center justify-between gap-2 px-3 py-2 text-[11px]"
+                  >
+                    <span className="text-muted">
+                      {formatUnixDay(entry.data.day)}
+                    </span>
+                    <span className="tabular-nums text-muted">
+                      {new Date(
+                        Number(entry.data.checkedAt) * 1000
+                      ).toLocaleTimeString(undefined, {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {habitCheckIns.length > 5 && (
+                <p className="mt-1 text-[11px] text-muted">
+                  Showing the 5 most recent.
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {status === HabitStatus.Active && (
