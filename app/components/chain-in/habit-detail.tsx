@@ -4,9 +4,12 @@ import { useState } from "react";
 import {
   formatUnixDay,
   getUnixDay,
+  HabitStatus,
   type DecodedAccount,
   type Habit,
 } from "../../lib/chain-in";
+import { useChainInActions } from "../../lib/hooks/use-chain-in-actions";
+import { useTodayCheckIn } from "../../lib/hooks/use-today-check-in";
 import { EditHabitForm } from "./edit-habit-form";
 import { StatusBadge } from "./status-badge";
 
@@ -30,6 +33,17 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 export function HabitDetail({ habit, onSettled, onClose }: HabitDetailProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const { checkIn, isSending } = useChainInActions();
+  const { isCheckedIn, refresh: refreshCheckIn } = useTodayCheckIn(
+    habit.data.status === HabitStatus.Active ? habit.address : undefined
+  );
+
+  const handleCheckIn = async () => {
+    const signature = await checkIn({ owner: habit.data.owner, habit });
+    refreshCheckIn();
+    if (signature) onSettled();
+  };
+
   const { id, name, description, status, currentStreak, longestStreak } =
     habit.data;
 
@@ -94,12 +108,27 @@ export function HabitDetail({ habit, onSettled, onClose }: HabitDetailProps) {
             />
           </dl>
 
-          <button
-            onClick={() => setIsEditing(true)}
-            className="mt-4 cursor-pointer rounded-lg border border-border-low bg-card px-4 py-2 text-sm font-medium transition hover:bg-cream"
-          >
-            Edit habit
-          </button>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {status === HabitStatus.Active && (
+              <button
+                onClick={handleCheckIn}
+                disabled={isSending || isCheckedIn === true}
+                className="cursor-pointer rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-xs transition hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
+              >
+                {isCheckedIn === true
+                  ? "Checked in today"
+                  : isSending
+                    ? "Checking in..."
+                    : "Check in today"}
+              </button>
+            )}
+            <button
+              onClick={() => setIsEditing(true)}
+              className="cursor-pointer rounded-lg border border-border-low bg-card px-4 py-2 text-sm font-medium transition hover:bg-cream"
+            >
+              Edit habit
+            </button>
+          </div>
         </>
       )}
     </section>

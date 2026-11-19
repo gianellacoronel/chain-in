@@ -3,11 +3,14 @@
 import { useCallback } from "react";
 import type { Address } from "@solana/kit";
 import {
+  deriveDailyCheckInAddress,
   deriveHabitAddress,
   deriveProfileAddress,
   getChainInErrorMessage,
+  getCheckInInstruction,
   getCreateHabitInstruction,
   getInitializeProfileInstruction,
+  getTodayUnixDay,
   getUpdateHabitInstruction,
   type DecodedAccount,
   type Habit,
@@ -105,5 +108,44 @@ export function useChainInActions() {
     [client, run]
   );
 
-  return { initializeProfile, createHabit, updateHabit, isSending };
+  const checkIn = useCallback(
+    async ({
+      owner,
+      habit,
+    }: {
+      owner: Address;
+      habit: DecodedAccount<Habit>;
+    }) => {
+      const day = getTodayUnixDay();
+      const dailyCheckIn = await deriveDailyCheckInAddress(habit.address, day);
+
+      const resolveError = (err: unknown): string | undefined => {
+        const text = JSON.stringify(err, Object.getOwnPropertyNames(err ?? {}));
+        if (/already in use|already exists/i.test(text)) {
+          return "You already checked in today.";
+        }
+        return (
+          getChainInErrorMessage(err) ??
+          "Could not check in. You may have already checked in today."
+        );
+      };
+
+      return run(
+        () =>
+          client.sendTransaction([
+            getCheckInInstruction({
+              owner,
+              habit: habit.address,
+              dailyCheckIn,
+              day,
+            }),
+          ]),
+        "Checked in",
+        resolveError
+      );
+    },
+    [client, run]
+  );
+
+  return { initializeProfile, createHabit, updateHabit, checkIn, isSending };
 }

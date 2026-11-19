@@ -1,15 +1,35 @@
 import type { Address } from "@solana/kit";
 import type { DecodedAccount, Habit } from "../../lib/chain-in";
+import { HabitStatus } from "../../lib/chain-in";
 import { formatUnixDay } from "../../lib/chain-in";
+import { useChainInActions } from "../../lib/hooks/use-chain-in-actions";
+import { useTodayCheckIn } from "../../lib/hooks/use-today-check-in";
 import { StatusBadge } from "./status-badge";
 
 type HabitCardProps = {
   habit: DecodedAccount<Habit>;
   isSelected: boolean;
   onSelect: (address: Address) => void;
+  onSettled: () => void;
 };
 
-export function HabitCard({ habit, isSelected, onSelect }: HabitCardProps) {
+export function HabitCard({
+  habit,
+  isSelected,
+  onSelect,
+  onSettled,
+}: HabitCardProps) {
+  const { checkIn, isSending } = useChainInActions();
+  const { isCheckedIn, refresh: refreshCheckIn } = useTodayCheckIn(
+    habit.data.status === HabitStatus.Active ? habit.address : undefined
+  );
+
+  const handleCheckIn = async () => {
+    const signature = await checkIn({ owner: habit.data.owner, habit });
+    refreshCheckIn();
+    if (signature) onSettled();
+  };
+
   const {
     name,
     description,
@@ -61,13 +81,28 @@ export function HabitCard({ habit, isSelected, onSelect }: HabitCardProps) {
           Last check-in:{" "}
           {lastCheckInDay === null ? "Never" : formatUnixDay(lastCheckInDay)}
         </p>
-        <button
-          onClick={() => onSelect(habit.address)}
-          aria-expanded={isSelected}
-          className="cursor-pointer rounded-lg border border-border-low bg-card px-2.5 py-1 text-[11px] font-medium transition hover:bg-cream"
-        >
-          {isSelected ? "Hide details" : "Manage"}
-        </button>
+        <div className="flex items-center gap-2">
+          {status === HabitStatus.Active && (
+            <button
+              onClick={handleCheckIn}
+              disabled={isSending || isCheckedIn === true}
+              className="cursor-pointer rounded-lg bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground shadow-xs transition hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
+            >
+              {isCheckedIn === true
+                ? "Checked in today"
+                : isSending
+                  ? "Checking in..."
+                  : "Check in"}
+            </button>
+          )}
+          <button
+            onClick={() => onSelect(habit.address)}
+            aria-expanded={isSelected}
+            className="cursor-pointer rounded-lg border border-border-low bg-card px-2.5 py-1 text-[11px] font-medium transition hover:bg-cream"
+          >
+            {isSelected ? "Hide details" : "Manage"}
+          </button>
+        </div>
       </div>
     </article>
   );

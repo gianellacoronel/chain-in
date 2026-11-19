@@ -9,6 +9,7 @@ type HabitListProps = {
   error: unknown;
   selectedAddress: Address | null;
   onSelect: (address: Address) => void;
+  onSettled: () => void;
   onRefresh: () => void;
 };
 
@@ -18,6 +19,7 @@ export function HabitList({
   error,
   selectedAddress,
   onSelect,
+  onSettled,
   onRefresh,
 }: HabitListProps) {
   if (status === "error" && habits === undefined) {
@@ -87,6 +89,7 @@ export function HabitList({
             habit={habit}
             isSelected={habit.address === selectedAddress}
             onSelect={onSelect}
+            onSettled={onSettled}
           />
         ))}
       </div>

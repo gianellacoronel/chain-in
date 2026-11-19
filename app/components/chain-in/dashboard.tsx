@@ -53,6 +53,7 @@ export function ChainInDashboard({
         error={error}
         selectedAddress={selectedAddress}
         onSelect={handleSelect}
+        onSettled={handleSettled}
         onRefresh={() => refresh()}
       />
     </div>
