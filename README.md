@@ -1,78 +1,158 @@
-# chain-in
+# Chain-In
 
-Next.js starter built on `@solana/kit` v8, Kit plugins, and [`@solana/react`](https://www.npmjs.com/package/@solana/react). Connect a browser wallet, switch networks, and send real transactions — SOL transfers, SPL token actions, and memos.
+**Ruta de proyecto propio** — seguimiento de hábitos diarios sobre Solana.
 
-## Getting Started
+- **Autora:** Gianella Xiomara Coronel Manchego
+- **Correo de registro:** gia.ne12@hotmail.com
 
-Requires Node.js 24 or newer.
+## Descripción
+
+Chain-In es una aplicación de seguimiento de hábitos diarios construida sobre Solana. Cada usuario crea un perfil on-chain, registra hábitos y realiza un check-in por día. El programa garantiza que solo el dueño de un hábito pueda modificarlo, que los check-ins sean únicos por día y que el cierre de cuentas devuelva la rent al propietario.
+
+El contrato está desplegado en **Devnet**. El frontend **no se despliega**: se ejecuta localmente contra Devnet.
+
+## Propósito
+
+Demostrar un flujo completo entre un programa Anchor y un frontend Next.js:
+
+- Estado persistido on-chain (perfil, hábitos e historial de check-ins).
+- Reglas de negocio aplicadas por el programa, no por la interfaz.
+- Firma, confirmación y refresco de datos tras cada transacción.
+- Manejo de errores del programa con mensajes claros.
+
+## Programa en Devnet
+
+| Dato       | Valor                                                                                           |
+| ---------- | ----------------------------------------------------------------------------------------------- |
+| Program ID | `Eai82xNfih16jrTcQktnKaAYWG9hkvUuQ6uRGPtDsWwM`                                                  |
+| Red        | Devnet                                                                                          |
+| Explorer   | https://explorer.solana.com/address/Eai82xNfih16jrTcQktnKaAYWG9hkvUuQ6uRGPtDsWwM?cluster=devnet |
+
+Instrucciones expuestas: `initialize_profile`, `create_habit`, `update_habit`, `check_in`, `pause_habit`, `resume_habit`, `archive_habit`, `close_habit`.
+
+## Configuración
+
+**Stack**
+
+- Programa: Rust + Anchor.
+- Frontend: Next.js 16, TypeScript, Tailwind CSS v4.
+- Cliente Solana: `@solana/kit` v8, `@solana/kit-plugin-wallet` y `@solana/react`.
+- Pruebas: Vitest.
+
+**Requisitos**
+
+- Node.js 24 o superior.
+- Wallet compatible con Wallet Standard y fondos en Devnet ([faucet.solana.com](https://faucet.solana.com/)).
+
+**Estructura**
+
+```text
+anchor/    Programa Anchor y pruebas LiteSVM
+app/       Frontend Next.js (UI, cliente Chain-In y hooks)
+tests/     Pruebas del frontend con Surfpool
+```
+
+**Red**
+
+El frontend inicia en Devnet y permite cambiar de red. La aplicación solo opera contra Devnet y Localnet: el programa no está desplegado en Mainnet ni Testnet.
+
+## Pasos de ejecución
+
+1. Instalar dependencias:
 
 ```shell
-npx -y create-solana-dapp@latest -t solana-foundation/templates/kit/chain-in
+pnpm install
 ```
+
+2. Iniciar el frontend:
 
 ```shell
-npm install
-npm run dev
+pnpm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), connect a wallet, and (on devnet) click **Airdrop 1 SOL** to fund it. Then try the actions. Need devnet SOL another way? [faucet.solana.com](https://faucet.solana.com/).
+3. Abrir http://localhost:3000 y conectar una wallet en Devnet con fondos.
 
-To use localnet, start a local validator in another terminal before selecting
-**localnet**:
+4. Crear el perfil y comenzar a registrar hábitos.
+
+**Comandos de verificación**
 
 ```shell
-solana-test-validator
+pnpm run typecheck   # TypeScript
+pnpm run lint        # ESLint
+pnpm run build       # Build de producción
+pnpm run test        # Pruebas automatizadas
 ```
 
-## What's Included
-
-- **Wallet connection** via the Kit wallet plugin (wallet-standard discovery, auto-reconnect)
-- **Network switcher** — devnet, testnet, mainnet, localnet
-- **Transfer SOL** with the [`@solana-program/system`](https://www.npmjs.com/package/@solana-program/system) kit plugin
-- **Token actions** — create a mint, mint tokens, and transfer them with the [`@solana-program/token`](https://www.npmjs.com/package/@solana-program/token) kit plugin (associated token accounts created for you)
-- **Add memo** with the [`@solana-program/memo`](https://www.npmjs.com/package/@solana-program/memo) kit plugin
-- **Live balance** and **toast notifications** with explorer links
-- **Tailwind CSS v4** with light/dark mode
-
-## How it works
-
-The app builds a Kit client in [`app/lib/solana-client.ts`](app/lib/solana-client.ts). The Kit wallet plugin supplies the connected wallet's transaction signer:
-
-```ts
-createClient()
-  .use(walletSigner({ chain }))
-  .use(solanaRpc({ rpcUrl, rpcSubscriptionsUrl, transactionConfig }))
-  .use(rpcAirdrop()) // client.airdrop (non-mainnet)
-  .use(systemProgram()) // client.system.instructions.transferSol
-  .use(tokenProgram()) // client.token.instructions.{createMint,mintToATA,transferToATA}
-  .use(memoProgram()); // client.memo.instructions.addMemo
-```
-
-Components use `useAppClient()` and the Kit wallet hooks from the local provider. Sending uses `client.sendTransaction([instruction])` or the program plugin's instruction-plan helpers.
-
-The Kit 8 RPC planner is configured to emit Version 1 transactions. This
-requires `@solana/kit-plugin-rpc` 0.19 or newer and a wallet that advertises
-Version 1 signing support. Version 1 transactions use a total priority fee in
-lamports and keep resource-limit estimation enabled through the RPC planner.
-
-### Switching networks
-
-A kit client is bound to one chain and RPC endpoint. The cluster dropdown rebuilds the client for that cluster. See [`app/lib/client-provider.tsx`](app/lib/client-provider.tsx).
-
-## Testing
+**Programa (opcional)**
 
 ```shell
-npm run test
+cd anchor
+anchor build
+anchor deploy --provider.cluster devnet
 ```
 
-The tests in [`tests/`](tests/) drive the real UI — click **Connect Wallet**, pick a wallet, fill in the transfer form, press **Send SOL** — and assert on-chain state before and after each click. Three pieces make that work without a browser or a wallet extension:
+## Flujo de uso
 
-- **[`@solana/surfpool` 1.7.0](https://www.npmjs.com/package/@solana/surfpool/v/1.7.0)** starts an isolated, in-process local runtime with dynamic RPC and WebSocket ports. It supports V1 transactions and provides funding helpers without a separate validator process.
-- **A mock wallet-standard wallet** ([`tests/mock-wallet.ts`](tests/mock-wallet.ts)) registers itself like any browser extension would, so the app's real wallet discovery, connect flow, and transaction signing run unmodified — signatures come from an in-memory keypair.
-- **[Vitest](https://vitest.dev) + [Testing Library](https://testing-library.com/docs/react-testing-library/intro/)** render the actual app components in jsdom and interact with them by role and label, the same way a user would.
+1. Conectar la wallet en Devnet.
+2. Crear el perfil on-chain (`initialize_profile`).
+3. Crear un hábito con nombre (máx. 40 bytes UTF-8) y descripción (máx. 160 bytes).
+4. Realizar el check-in diario; el programa valida que sea el día UTC actual.
+5. Editar el hábito, pausarlo, reanudarlo o archivarlo según su estado.
+6. Cerrar un hábito archivado para recuperar la rent.
+7. Consultar el historial de check-ins, incluidos los de hábitos cerrados.
 
-The tests point `AppClientProvider` at Surfpool through its optional URL override and assert that sent transactions have version 1 as well as their expected local-chain effects. Each run starts its own runtime and stops it during teardown. No existing validator, ledger, or devnet funds are used.
+## Aporte propio
 
-Surfpool's native test runtime supports Linux x64 and macOS x64/arm64. On Windows, run the tests in a supported Linux x64 WSL environment with Node.js 24 or newer. No separate Solana CLI installation is required.
+El aporte identificable es la integración completa del programa con el frontend, sin generadores de código ni dependencias adicionales:
 
-The tests use `Surfnet.startWithConfig` with remote account fallback enabled so Surfpool can fetch the deployed Memo program. An internet connection and an available mainnet RPC are required. The default is `https://api.mainnet-beta.solana.com`; set `SOLANA_TEST_REMOTE_RPC_URL` to use another mainnet RPC if needed. Test transactions are sent only to Surfpool's local RPC, never to the upstream network. No Memo binary or license fixture is bundled, and no Solana CLI dump or deployment step is needed.
+- **Cliente Chain-In tipado a mano** sobre `@solana/kit`: IDs de programa, discriminadores, codecs Borsh, PDAs y las 8 instrucciones. Se eligió esta ruta frente a Codama por el tamaño reducido del programa (3 cuentas, 8 instrucciones) y para mantener el control explícito de roles y seeds.
+- **Validación alineada con el contrato**: los límites de 40/160 bytes se miden en UTF-8, igual que Anchor, y se aplican antes de firmar.
+- **Reglas críticas verificadas en el programa**: `profile.authority` para crear hábitos, `has_one = owner` en todas las operaciones sobre hábitos, y `close = owner` con estado `Archived` para cerrar cuentas.
+- **Consistencia de datos**: cada acción refresca perfil, hábitos e historial desde la cadena; la UI nunca asume el resultado de una transacción.
+- **Manejo de errores**: mapeo de los códigos del programa (6000–6011) a mensajes de usuario, con fallback para check-ins duplicados.
+
+## Cómo probarlo
+
+**Prueba manual (Devnet)**
+
+1. Ejecutar `pnpm run dev`.
+2. Conectar una wallet con SOL de Devnet.
+3. Completar el flujo: perfil → hábito → check-in → editar → pausar/reanudar → archivar → cerrar.
+4. Verificar en el Explorer que las cuentas `Profile`, `Habit` y `DailyCheckIn` existen y reflejan los cambios.
+
+**Qué comprobar**
+
+- Solo el dueño puede modificar su hábito (una wallet distinta recibe error de autoridad).
+- Un hábito pausado o archivado no acepta check-ins.
+- No se puede registrar más de un check-in por día.
+- Cerrar un hábito archivado elimina la cuenta y devuelve la rent.
+- El historial conserva el nombre del hábito aunque la cuenta se haya cerrado.
+
+La suite `pnpm run test` cubre el flujo base del starter. El flujo Chain-In se comprueba con los pasos anteriores.
+
+## Capturas de pantalla
+
+#### Wallet conectada y perfil creado
+
+![](image.png)
+
+#### Creación de hábito
+
+![](image_1.png)
+
+#### Lista de hábitos con rachas
+
+![](image_2.png)
+
+#### Detalle y acciones del hábito
+
+![](image_3.png)
+
+#### Historial de check-ins
+
+![](image_4.png)
+
+## Transacciones verificables
+
+- Crear un hábito: https://explorer.solana.com/tx/49KYkEkFytJ7tPFfBwycjeZPGPGY3mFtU8fZLXZWsWiMNRUoWAR5pWDJdSuNre2QV2cHCamHwafnJWpm3oPJG9FF?cluster=devnet
+- Hacer check-in: https://explorer.solana.com/tx/jpmyqm1Gy2dZEALPTLuF6pzzhUJXSSY2KkHB8zxkHqn91TpyYkMhUajtsZB7iB7EnBmr2NekQ6NbYXnpbe6CimY?cluster=devnet
