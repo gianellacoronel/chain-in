@@ -156,3 +156,8 @@ La suite `pnpm run test` cubre el flujo base del starter. El flujo Chain-In se c
 
 - Crear un hábito: https://explorer.solana.com/tx/49KYkEkFytJ7tPFfBwycjeZPGPGY3mFtU8fZLXZWsWiMNRUoWAR5pWDJdSuNre2QV2cHCamHwafnJWpm3oPJG9FF?cluster=devnet
 - Hacer check-in: https://explorer.solana.com/tx/jpmyqm1Gy2dZEALPTLuF6pzzhUJXSSY2KkHB8zxkHqn91TpyYkMhUajtsZB7iB7EnBmr2NekQ6NbYXnpbe6CimY?cluster=devnet
+
+## Video demo
+
+https://github.com/user-attachments/assets/d66a8612-23b0-4d82-92e5-4a788c97b7ba
+
