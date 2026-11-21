@@ -230,7 +230,7 @@ export function HabitDetail({ habit, onSettled, onClose }: HabitDetailProps) {
               <button
                 onClick={() => setConfirming("close")}
                 disabled={isSending}
-                className="cursor-pointer rounded-lg border border-destructive/40 bg-card px-4 py-2 text-sm font-medium text-destructive transition hover:bg-destructive/10 disabled:pointer-events-none disabled:opacity-50"
+                className="cursor-pointer rounded-lg border border-destructive-border bg-card px-4 py-2 text-sm font-medium text-destructive-text transition hover:bg-destructive-soft disabled:pointer-events-none disabled:opacity-50"
               >
                 Close (return rent)
               </button>
@@ -269,24 +269,30 @@ export function HabitDetail({ habit, onSettled, onClose }: HabitDetailProps) {
           )}
 
           {confirming === "close" && (
-            <div className="mt-3 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs">
-              <p className="font-medium text-destructive">
-                Close this habit permanently? Its rent will be returned to your
-                wallet and the account will disappear, but check-in history is
-                preserved.
+            <div
+              className="mt-3 rounded-lg border border-destructive-border bg-destructive-soft p-3 text-xs"
+              role="alertdialog"
+              aria-label="Confirm habit close"
+            >
+              <p className="text-sm font-semibold text-destructive-text">
+                Close this habit permanently?
               </p>
-              <div className="mt-2 flex gap-2">
+              <p className="mt-1 leading-relaxed text-muted">
+                Its rent will be returned to your wallet and the account will
+                disappear, but check-in history is preserved.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   onClick={handleClose}
                   disabled={isSending}
-                  className="cursor-pointer rounded-lg bg-destructive px-3 py-1.5 text-xs font-medium text-destructive-foreground shadow-xs transition hover:bg-destructive/90 disabled:opacity-50"
+                  className="cursor-pointer rounded-lg bg-destructive px-3 py-1.5 text-xs font-semibold text-destructive-foreground shadow-xs transition hover:bg-destructive/90 disabled:pointer-events-none disabled:opacity-50"
                 >
                   {isSending ? "Closing..." : "Confirm close"}
                 </button>
                 <button
                   onClick={() => setConfirming(null)}
                   disabled={isSending}
-                  className="cursor-pointer rounded-lg border border-border-low bg-card px-3 py-1.5 text-xs font-medium transition hover:bg-cream disabled:opacity-50"
+                  className="cursor-pointer rounded-lg border border-border-low bg-card px-3 py-1.5 text-xs font-medium transition hover:bg-cream disabled:pointer-events-none disabled:opacity-50"
                 >
                   Cancel
                 </button>
