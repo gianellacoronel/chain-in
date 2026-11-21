@@ -3,7 +3,7 @@
 **Ruta de proyecto propio** — seguimiento de hábitos diarios sobre Solana.
 
 - **Autora:** Gianella Xiomara Coronel Manchego
-- **Correo de registro:** gia.ne12@hotmail.com
+- **Correo de registro:** gia.cm020402@gmail.com
 
 ## Descripción
 
